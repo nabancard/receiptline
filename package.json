@@ -2,11 +2,10 @@
   "name": "receiptline",
   "version": "1.8.0",
   "description": "Markdown for receipts. Printable digital receipts. Generate receipt printer commands and SVG images.",
-  "main": "dist/receiptline.js",
+  "main": "lib/receiptline.js",
   "directories": {
     "example": "example",
-    "lib": "lib",
-    "dist": "dist"
+    "lib": "lib"
   },
   "scripts": {
     "test": "node designer.js",

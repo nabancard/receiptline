@@ -10,7 +10,7 @@ const pkg = require('../package.json');
 
   try {
     console.info(chalk.blue(`Build Started`));
-    const outdir = path.resolve(__dirname, '../dist');
+    const outdir = path.resolve(__dirname, '../lib');
 
     // CLEAN STAGE
     console.info(chalk.blueBright(`clean started`));
@@ -32,8 +32,6 @@ const pkg = require('../package.json');
       entryPoints,
       bundle: true,
       format: 'cjs',
-      // format: 'esm',
-      // sourcemap: true,
       external: [
         'stream',
         'string_decoder',
@@ -41,9 +39,6 @@ const pkg = require('../package.json');
         ...Object.keys(pkg.peerDependencies || {})
       ],
       outdir,
-      // loader: {
-      //   '.png': 'dataurl',
-      // },
       logLevel: 'debug',
     });
     console.info(chalk.blue(`esbuild build complete`), result);
