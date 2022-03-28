@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/receiptline/receiptline.git"
+    "url": "git+https://github.com/nabancard/receiptline.git"
   },
   "keywords": [
     "thermal",
@@ -39,9 +39,9 @@
   "author": "Open Foodservice System Consortium",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/receiptline/receiptline/issues"
+    "url": "https://github.com/nabancard/receiptline/issues"
   },
-  "homepage": "https://github.com/receiptline/receiptline#readme",
+  "homepage": "https://github.com/nabancard/receiptline#readme",
   "dependencies": {
     "iconv-lite": "^0.6.0",
     "pngjs": "^5.0.0"
