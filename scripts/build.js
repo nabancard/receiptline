@@ -46,7 +46,7 @@ const pkg = require('../package.json');
     // TYPESCRIPT STAGE
     console.info(chalk.blueBright(`typescript started`));
     let ts = Date.now();
-    await execSync('$(npm bin)/tsc --project ./tsconfig.build.json');
+    await execSync('$(npm bin)/tsc -p ./tsconfig.build.json --emitDeclarationOnly');
     ts = Date.now() - ts;
     console.info(chalk.blueBright(`typescript done in ${ts / 1000}s`));
   } catch (e) {
