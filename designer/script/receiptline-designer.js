@@ -72,16 +72,20 @@ function initialize() {
     const em = document.getElementById('em');
     const iv = document.getElementById('iv');
     const wh = document.getElementById('wh');
+    const lang = document.getElementById('lang');
     const linewidth = document.getElementById('linewidth');
+    const landscape = document.getElementById('landscape');
     const linespace = document.getElementById('linespace');
     const dots = document.getElementById('dots');
     const cpl = document.getElementById('cpl');
     const printerid = document.getElementById('printerid');
     const send = document.getElementById('send');
-    const main = document.getElementById('main');
     const edit = document.getElementById('edit');
-    const paper = document.getElementById('paper');
+    const printarea = document.getElementById('printarea');
     const charWidth = 12;
+    const encoding = {
+        '-': 'multilingual', 'ja': 'shiftjis', 'zh-Hans': 'gb18030', 'zh-Hant': 'big5', 'ko': 'ksc5601', 'th': 'tis620'
+    };
 
     // register file button event listener
     load.onclick = event => {
@@ -135,29 +139,14 @@ function initialize() {
         if (savetext.checked) {
             const a = document.createElement('a');
             a.href = window.URL.createObjectURL(new Blob([ bom, edit.value ], { type: 'text/plain' }));
-            a.download = 'receiptline.txt';
+            a.download = 'receiptline.receipt';
             a.click();
         }
         // save svg file
         if (savesvg.checked) {
-            const lang = window.navigator.language;
-            let encoding = 'cp437';
-            switch (lang.slice(0, 2)) {
-                case 'ja':
-                    encoding = 'cp932';
-                    break;
-                case 'zh':
-                    encoding = /^zh-(tw|hk)/i.test(lang) ? 'cp950' : 'cp936';
-                    break;
-                case 'ko':
-                    encoding = 'cp949';
-                    break;
-                default:
-                    break;
-            }
             const printer = {
                 cpl: Number(cpl.textContent),
-                encoding: encoding,
+                encoding: encoding[lang.value],
                 spacing: linespace.checked
             };
             const svg = receiptline.transform(edit.value, printer);
@@ -320,48 +309,61 @@ function initialize() {
     // register scale up button event listener
     wh.onclick = event => insertText(edit, '^');
 
+    // register language selectbox event listener
+    lang.onchange = event => edit.oninput();
+
     // register width slidebar event listener
     linewidth.oninput = event => {
-        paper.style.width = linewidth.value + 'px';
+        if (landscape.checked) {
+            printarea.style.width = '576px';
+            printarea.style.height = linewidth.value + 'px';
+        }
+        else {
+            printarea.style.width = linewidth.value + 'px';
+            printarea.style.height = 'auto';
+        }
         dots.textContent = linewidth.value;
         cpl.textContent = linewidth.value / charWidth;
         // update receipt
         edit.oninput();
     };
 
+    // register landscape checkbox event listener
+    landscape.onchange = event => {
+        if (landscape.checked) {
+            linewidth.min = 576;
+            linewidth.max = 1152;
+        }
+        else {
+            linewidth.min = 288;
+            linewidth.max = 576;
+        }
+        // update width slidebar
+        linewidth.value = 576;
+        linewidth.oninput();
+    };
+
     // register spacing checkbox event listener
     linespace.onchange = event => edit.oninput();
 
-    // register input event listener (immediately invoked)
-    (edit.oninput = event => {
-        const lang = window.navigator.language;
-        main.lang = lang;
-        let encoding = 'cp437';
-        switch (lang.slice(0, 2)) {
-            case 'ja':
-                encoding = 'cp932';
-                break;
-            case 'zh':
-                encoding = /^zh-(tw|hk)/i.test(lang) ? 'cp950' : 'cp936';
-                break;
-            case 'ko':
-                encoding = 'cp949';
-                break;
-            default:
-                break;
-        }
+    // register input event listener
+    edit.oninput = event => {
         const printer = {
             cpl: Number(cpl.textContent),
-            encoding: encoding,
+            encoding: encoding[lang.value],
             spacing: linespace.checked
         };
         const svg = receiptline.transform(edit.value, printer);
         const dom = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
-        while (paper.hasChildNodes()) {
-            paper.removeChild(paper.firstChild);
+        if (landscape.checked) {
+            dom.style.transformOrigin = 'top left';
+            dom.style.transform = `rotate(-90deg) translateX(-${linewidth.value}px)`;
         }
-        paper.appendChild(dom);
-    })();
+        while (printarea.hasChildNodes()) {
+            printarea.removeChild(printarea.firstChild);
+        }
+        printarea.appendChild(dom);
+    };
 
     // register printer text box event listener
     printerid.oninput = event => {
@@ -393,6 +395,60 @@ function initialize() {
 
     // register before unload event listener
     window.onbeforeunload = event => event.returnValue = '';
+
+    // query string of URL
+    const params = new URLSearchParams(window.location.search);
+    // zoom
+    const z = params.get('z');
+    if (/^-?[0-5]$/.test(z)) {
+        zoom.value = Number(z) * 2 + 20;
+        zoom.oninput();
+    }
+    // language
+    const l = params.has('l') ? params.get('l') : window.navigator.language;
+    switch (l.slice(0, 2)) {
+        case 'ja':
+            lang.value = 'ja';
+            break;
+        case 'zh':
+            lang.value = /^zh-(tw|hk|mo|hant)/i.test(l) ? 'zh-Hant' : 'zh-Hans';
+            break;
+        case 'ko':
+            lang.value = 'ko';
+            break;
+        case 'th':
+            lang.value = 'th';
+            break;
+        default:
+            lang.value = '-';
+            break;
+    }
+    // linespace
+    if (params.get('s') === '1') {
+        linespace.checked = true;
+    }
+    // landscape
+    if (params.get('v') === '1') {
+        landscape.checked = true;
+        linewidth.min = 576;
+        linewidth.max = 1152;
+    }
+    // linewidth
+    const c = params.get('c');
+    if (/^(2[4-9]|[3-8]\d|9[0-6])$/.test(c)) {
+        linewidth.value = Number(c) * 12;
+    }
+    // printerid
+    if (params.has('p')) {
+        printerid.value = params.get('p');
+        printerid.oninput();
+    }
+    // data
+    if (params.has('d')) {
+        edit.value = params.get('d');
+    }
+    // initialize receipt
+    linewidth.oninput();
 }
 
 function insertText(edit, text, lf) {

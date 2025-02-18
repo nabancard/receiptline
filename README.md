@@ -1,9 +1,19 @@
-# receiptline
+# ReceiptLine
 
 Markdown for receipts. Printable digital receipts. &#x1f9fe;  
-Generate receipt printer commands and SVG images.  
+Generate receipt printer commands and images.  
 
-[ReceiptIO](https://github.com/receiptline/receiptio) - Simple and easy API and CLI using receiptline, supporting printer status.  
+|Package|Type|For|Description|
+|---|---|---|---|
+|[ReceiptLine](https://www.npmjs.com/package/receiptline)|SDK for **Node.js**|Developers|Receipt description language processor|
+|[ReceiptIO](https://www.npmjs.com/package/receiptio)|Node.js Console App|Users|Print, Convert, Printer status|
+|[Designer](https://receiptline.github.io/designer/)|Tool|All|Edit, Preview|
+|[Receipt Markdown](https://marketplace.visualstudio.com/items?itemName=receiptline.receipt-markdown)|VS Code Extension|All|Edit, Preview|
+|[Receipt.js](https://github.com/receiptline/receiptjs)|SDK for **JavaScript**|Developers|Receipt description language processor<br>Print, Convert, Printer status|
+|[Receipt.js Designer](https://receiptline.github.io/receiptjs-designer/)|Tool|All|Edit, Preview, **Print**|
+
+"ReceiptLine" is a coined word from "Receipt" and "Streamline".  
+Make it more efficient by making it simpler!  
 
 ![English](screenshot_en.png)  
 ![Japanese](screenshot_ja.png)  
@@ -16,7 +26,7 @@ http://www.ofsc.or.jp/receiptline/en/
 
 ReceiptLine is the receipt description language that expresses the output image of small roll paper.  
 It supports printing paper receipts using a receipt printer and displaying electronic receipts on a POS system or smartphone.  
-It can be described simply with markdown-like text data that does not depend on the paper width.  
+It can be described simply with receipt markdown text data that does not depend on the paper width.  
 
 This reference implementation also provides the development tool "ReceiptLine Designer" for editing, previewing, hex dumps with a virtual printer, and test printing on receipt printers.  
 
@@ -27,6 +37,8 @@ This reference implementation also provides the development tool "ReceiptLine De
 - Star MC series
 - Citizen CT series
 - Fujitsu FP series
+
+Epson TM series (South Asia model) and Star MC series (StarPRNT model) can print with device font of Thai characters.  
 
 ![Printers](readme_printer.jpg)  
 
@@ -100,6 +112,7 @@ const svg = receiptline.transform(doc, display);
   - `ksc5601`: Korean
   - `cp950`: Traditional Chinese
   - `big5`: Traditional Chinese
+  - `tis620`: Thai
 - `gradient` (for printer)
   - `false`: image processing for text, barcodes, and 2D codes
   - `true`: image processing for photos (default)
@@ -116,15 +129,22 @@ const svg = receiptline.transform(doc, display);
 - `cutting` (for printer)
   - `false`: no paper cutting
   - `true`: paper cutting (default)
+- `margin` (for printer)
+  - print margin (left) (range: `0` - `24`, default: `0`)
+- `marginRight` (for printer)
+  - print margin (right) (range: `0` - `24`, default: `0`)
 - `command`
   - `svg`: SVG (default)
-  - `escpos`: ESC/POS (Epson)
+  - `text`: plain text
+  - `escpos`: ESC/POS
+  - `epson`: ESC/POS (Epson)
   - `sii`: ESC/POS (Seiko Instruments)
   - `citizen`: ESC/POS (Citizen)
   - `fit`: ESC/POS (Fujitsu)
   - `impact`: ESC/POS (TM-U220)
   - `impactb`: ESC/POS (TM-U220 Font B)
-  - `starsbcs`: StarPRNT (SBCS)
+  - `generic`: ESC/POS (Generic) _Experimental_
+  - `starsbcs`: StarPRNT (SBCS, Thai)
   - `starmbcs`: StarPRNT (Japanese)
   - `starmbcs2`: StarPRNT (Chinese, Korean)
   - `starlinesbcs`: Star Line Mode (SBCS)
@@ -134,6 +154,9 @@ const svg = receiptline.transform(doc, display);
   - `emustarlinembcs`: Command Emulator Star Line Mode (Japanese)
   - `emustarlinembcs2`: Command Emulator Star Line Mode (Chinsese, Korean)
   - `stargraphic`: Star Graphic Mode (TSP100LAN)
+  - `starimpact`: Star Mode on dot impact printers _Experimental_
+  - `starimpact2`: Star Mode on dot impact printers (Font 5x9 2P-1) _Experimental_
+  - `starimpact3`: Star Mode on dot impact printers (Font 5x9 3P-1) _Experimental_
 
 # Transform stream API
 
@@ -143,7 +166,7 @@ const svg = receiptline.transform(doc, display);
 const fs = require('fs');
 const receiptline = require('receiptline');
 
-const source = fs.createReadStream('example.txt');
+const source = fs.createReadStream('example.receipt');
 const transform = receiptline.createTransform({ command: 'svg' });
 const destination = fs.createWriteStream('example.svg');
 
@@ -175,15 +198,15 @@ Print order slips from cloud server using Epson Server Direct Print or Star Clou
 
 ### example/nodejs/\*
 
-Enter markdown-like text from the web form, transform it to printer commands on the server, and print it out.  
+Enter receipt markdown text from the web form, transform it to printer commands on the server, and print it out.  
 
 ### example/js/\*
 
-Enter markdown-like text from the web form, transform it to SVG images on the web browser, and display it.  
+Enter receipt markdown text from the web form, transform it to SVG images on the web browser, and display it.  
 
 ### example/data/\*
 
-The documents (markdown-like text) are the same as the examples in the OFSC ReceiptLine Specification.  
+The documents (receipt markdown text) are the same as the examples in the OFSC ReceiptLine Specification.  
 
 ### example/command/\*
 
@@ -194,7 +217,7 @@ Customize the command object to output your own commands.
 ### lib/receiptline.js
 
 JavaScript ES2015(ES6) version. It works on both web browser and Node.js.  
-To output printer commands on a web browser, use Browserify.  
+To output printer commands on a web browser, use [Receipt.js](https://github.com/receiptline/receiptjs) or Browserify.  
 
 ```bash
 $ browserify -o receiptline-full.js receiptline.js
@@ -244,7 +267,7 @@ The ReceiptLine Designer provides more features.
         "port": 19100,
         "asImage": false,
         "cpl": 48,
-        "encoding": "cp932",
+        "encoding": "shiftjis",
         "gradient": true,
         "gamma": 1.8,
         "threshold": 128,
@@ -263,9 +286,45 @@ The ReceiptLine Designer provides more features.
       - printer port (will be `9100`)
     - `asImage`
       - `false`: print with device font (default)
-      - `true`: print as image (Requires [puppeteer](https://www.npmjs.com/package/puppeteer))
-    - `cpl`, `encoding`, `gradient`, `gamma`, `threshold`, `upsideDown`, `spacing`, `cutting`, `command`
+      - `true`: print as image (Requires [puppeteer](https://www.npmjs.com/package/puppeteer) or [sharp](https://www.npmjs.com/package/sharp))
+    - `landscape`
+      - `false`: normal (default)
+      - `true`: landscape orientation (for `escpos`, `epson`, `sii`, `citizen`, `starsbcs`, `starmbcs`, `starmbcs2`)
+    - `resolution`
+      - print resolution for `landscape` (values: `180`, `203`, default: `203`)
+    - `cpl`
+    - `encoding`
+    - `gradient`
+    - `gamma`
+    - `threshold`
+    - `upsideDown`
+    - `spacing`
+    - `cutting`
+    - `margin`
+    - `marginRight`
       - see the printer configuration above
+    - `command`
+      - see the printer configuration above
+      - `png`: PNG (Requires [puppeteer](https://www.npmjs.com/package/puppeteer) or [sharp](https://www.npmjs.com/package/sharp))
+
+## URL query string
+
+The designer can set initial values in the URL query string.  
+
+### Parameters
+
+- `z`: zoom (range: `-5`-`5`, default: `0`)
+- `l`: language (`en`, `ja`, `ko`, `zh-hans`, `zh-hant`, `th`, ...)
+- `c`: characters per line (range: `24`-`96`, default: `48`)
+- `v`: landscape (values: `0`, `1`, default: `0`)
+- `s`: line spacing (values: `0`, `1`, default: `0`)
+- `p`: printer identifier (alphanumeric or underscore characters)
+- `d`: ReceiptLine document
+
+### Examples
+
+- http://localhost:8080/index.html?c=42&p=tm_series1
+- https://receiptline.github.io/designer/index.html?d={code%3A2012345678903%3Boption%3Aean%2Chri}
 
 # Serial-LAN Converter
 
@@ -297,6 +356,27 @@ The serial-LAN converter enables test printing to USB / Bluetooth printers that 
       - local port
     - `device`
       - the system path of the serial port
+      - `<system path>[:<options>]`
+
+    Serial port options  
+
+    ```json
+        "device": "COM9:9600,N,8,1"
+    ```
+    - `<options>`
+      - `<baud rate>,<parity>,<data bits>,<stop bits>[,<flow control>]`
+      - default: `9600,N,8,1,N`
+      - commas can be omitted
+    - `<baud rate>`
+      - `2400`, `4800`, `9600`, `19200`, `38400`, `57600`, `115200`
+    - `<parity>`
+      - `N`: none, `E`: even, `O`: odd
+    - `<data bits>`
+      - `8`, `7`
+    - `<stop bits>`
+      - `1`, `2`
+    - `<flow control>`
+      - `N`: none, `R`: rts/cts, `X`: xon/xoff
 
 1. Restart the server
 
@@ -508,7 +588,6 @@ Escape special characters.
 
 - Communication with the printer, status event processing, and error handling are out of scope.
 - SVG images depend on the font family installed on the computer and may not display properly.
-- The QR code for display is encoded in UTF-8, while the QR code for printing is encoded in ASCII or Shift_JIS.
 - Impact printer has some limitations for printing.
   - Characters larger than 2x size
   - Inverted characters (**will be printed in red**)
@@ -517,6 +596,7 @@ Escape special characters.
   - Image position and size ratio
   - Barcodes and 2D codes
 - Star Graphic Mode printing only supports images, line feeds, and paper cuts.
+- [sharp](https://www.npmjs.com/package/sharp) is not support web fonts and minimizes the area of "invert" character decoration.
 
 # Author
 
@@ -525,7 +605,7 @@ http://www.ofsc.or.jp/
 
 # License
 
-- receiptline
+- ReceiptLine
   - Apache License, Version 2.0
 - QR Code Generator for JavaScript with UTF8 Support
   - MIT License
